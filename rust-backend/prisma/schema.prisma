@@ -1,0 +1,99 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "cargo prisma"
+    output   = "../src/prisma.rs"
+}
+
+model User {
+    id         String  @id
+    first_name String
+    last_name  String?
+    phone      String?
+    email      String  @unique
+    team_id    String
+    team       Team    @relation(fields: [team_id], references: [id])
+}
+
+model Organization {
+    id        String     @id
+    name      String
+    email     String
+    phone     String
+    locations Location[]
+}
+
+enum Role {
+    OrganizationAdmin
+    LocationAdmin
+    TeamAdmin
+    TeamMember
+}
+
+model UserRole {
+    user_id         String
+    organization_id String
+    role            Role
+
+    @@unique([user_id, organization_id])
+}
+
+model Location {
+    id              String       @id
+    name            String
+    email           String
+    phone           String
+    street          String
+    city            String
+    state           String
+    country         String
+    postcode        String
+    teams           Team[]
+    organization_id String
+    organization    Organization @relation(fields: [organization_id], references: [id])
+}
+
+model Team {
+    id          String     @id
+    location_id String
+    name        String
+    members     User[]
+    schedules   Schedule[]
+    location    Location   @relation(fields: [location_id], references: [id])
+}
+
+model Schedule {
+    id         String  @id
+    team_id    String
+    start_date String
+    end_date   String
+    shifts     Shift[]
+    team       Team    @relation(fields: [team_id], references: [id])
+}
+
+model Shift {
+    id              String   @id
+    assigned_to     String
+    start_date_time String
+    end_date_time   String
+    duration        String
+    breaks          Break[]
+    is_open         Boolean
+    is_close        Boolean
+    is_double       Boolean
+    schedule_id     String
+    schedule        Schedule @relation(fields: [schedule_id], references: [id])
+}
+
+model Break {
+    id              String  @id
+    start_date_time String
+    end_date_time   String
+    duration        String
+    is_meal         Boolean
+    shift_id        String
+    shift           Shift   @relation(fields: [shift_id], references: [id])
+}
